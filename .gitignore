@@ -1,22 +1,43 @@
+# =========================
 # Rust
-/target
-**/*.rs.bk
-Cargo.lock
+# =========================
 
+# Build output
+/target/
+
+# Rust backup files
+**/*.rs.bk
+
+
+# =========================
 # OS / Editor
+# =========================
+
+# macOS
 .DS_Store
+
+# Windows
 Thumbs.db
+
+# Editors / IDEs
 .vscode/
 .idea/
 
-# Logs / temp
+
+# =========================
+# Logs / Temp files
+# =========================
+
 *.log
 
-# Project cache/output
+
+# =========================
+# Project runtime data
+# =========================
+
+# Tool runtime cache & input
 cache/
 input_File/
 
+# Local binaries
 duckdb.exe
-cache/
-input_File/
-target/
