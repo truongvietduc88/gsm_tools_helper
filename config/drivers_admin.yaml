@@ -1,0 +1,51 @@
+dataset_name: drivers_admin
+
+mode: auto
+
+input:
+  format: excel
+  file_pattern:
+    - "*.xlsx"
+    - "*.xlsb"
+  header: true
+
+output:
+  format: parquet
+  overwrite: true
+
+options:
+  strict_schema: false
+
+transform:
+
+  select:
+    - Order ID
+    - Status
+    - Service Type
+    - Service Name
+    - Create Time
+    - Completed Time
+    - Vehicle
+    - Driver Vehicle Plate
+    - Sap Profile Id
+    - Payment Method
+    - Total Fee Display
+    - Cancel Reason
+    - Detail Reason
+    - Cancel By
+
+  rename:
+    Sap Profile Id: SAP ID
+
+  filters:
+    - "\"Sap Contract Type\" = 'car'"
+
+  computed:
+    - name: Create Time
+      expr: "CAST(\"Create Time\" AS TIMESTAMP)"
+
+    - name: Completed Time
+      expr: "CAST(\"Completed Time\" AS TIMESTAMP)"
+
+  distinct: true
+
