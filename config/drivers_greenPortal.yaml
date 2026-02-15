@@ -1,0 +1,49 @@
+dataset_name: drivers_greenPortal
+
+mode: auto
+
+input:
+  format: excel
+  file_pattern:
+    - "*.xlsx"
+    - "*.xlsb"
+  header: true
+
+output:
+  format: parquet
+  overwrite: true
+
+options:
+  strict_schema: false
+
+transform:
+
+  select:
+    - Mã SAP
+    - Số điện thoại
+    - Họ & tên
+    - Trạng thái
+    - Ngày sinh
+    - Giới tính
+    - Trạng thái tài khoản
+    - Lý do khóa
+    - Dòng xe
+    - Biển số
+    - Trạng thái gán
+    - Thời gian gán
+    - Tổ
+    - Loại tài xế
+    - Trạng thái Deposit
+    - Ngày đầu tiên gán xe
+
+  rename:
+    Mã SAP: SAP ID
+
+  computed:
+    - name: Thời gian gán
+      expr: "CAST(\"Thời gian gán\" AS TIMESTAMP) + INTERVAL 7 HOUR"
+
+    - name: Ngày đầu tiên gán xe
+      expr: "CAST(\"Ngày đầu tiên gán xe\" AS TIMESTAMP) + INTERVAL 7 HOUR"
+
+  distinct: true
