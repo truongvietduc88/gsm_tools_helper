@@ -1,0 +1,34 @@
+dataset_name: drivers_admin
+
+mode: auto
+
+input:
+  format: excel
+  file_pattern:
+    - "*.xlsx"
+    - "*.xlsb"
+  header: true
+
+output:
+  format: parquet
+  overwrite: true
+
+options:
+  strict_schema: false
+
+transform:
+
+  select:
+    - SAP ID
+    - Account Status
+    - Driver Type
+    - Plate Number
+    - Vehicle Type
+    - Vehicle Model
+    - Wallet balance
+
+  filters:
+    - "\"Account Status\" = 'ACTIVATED'"
+    - "\"Driver Type\" = 'car'"
+
+  distinct: true

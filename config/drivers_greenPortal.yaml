@@ -39,6 +39,10 @@ transform:
   rename:
     Mã SAP: SAP ID
 
+  filters:
+    - "\"Loại tài xế\" = 'Internal'"
+    - "(\"Lý do khóa\" IS NULL OR \"Lý do khóa\" <> 'Terminate')"
+
   computed:
     - name: Thời gian gán
       expr: "CAST(\"Thời gian gán\" AS TIMESTAMP) + INTERVAL 7 HOUR"
