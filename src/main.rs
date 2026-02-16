@@ -3,7 +3,6 @@ mod cache;
 mod extract_orders;
 mod fs_scan;
 mod types;
-
 mod hw;
 mod autotune;
 
@@ -36,22 +35,18 @@ struct Cli {
 #[derive(Subcommand, Debug)]
 enum Commands {
     ListDatasets,
-
     Plan {
         #[arg(long)]
         dataset: String,
         #[arg(long, default_value = "single")]
         mode: String,
     },
-
     Extract {
         #[arg(long)]
         dataset: String,
         #[arg(long, default_value = "single")]
         mode: String,
     },
-
-    /// ✅ NEW: tự discover và extract hết (single + multi)
     RunAll,
 }
 
@@ -65,13 +60,27 @@ fn parse_mode(s: &str) -> RunMode {
 fn main() -> anyhow::Result<()> {
     let cli = Cli::parse();
 
-    let exe_dir = std::env::current_exe()?
-        .parent()
+    // 🔥 LUÔN đi lên 3 cấp để về GSM_Mini_Tools
+    let exe_path = std::env::current_exe()?;
+    let base_dir = exe_path
+        .parent()  // debug/
+        .and_then(|p| p.parent()) // target/
+        .and_then(|p| p.parent()) // gsm_tools_helper/
+        .and_then(|p| p.parent()) // Sourcecode/
+        .and_then(|p| p.parent()) // GSM_Mini_Tools/
         .map(|p| p.to_path_buf())
         .unwrap_or_else(|| PathBuf::from("."));
 
-    let input_root = cli.input_root.unwrap_or_else(|| exe_dir.join("input_File"));
-    let cache_root = cli.cache_root.unwrap_or_else(|| exe_dir.join("cache"));
+    let input_root = cli
+        .input_root
+        .unwrap_or_else(|| base_dir.join("input_File"));
+
+    let cache_root = cli
+        .cache_root
+        .unwrap_or_else(|| base_dir.join("cache"));
+
+    println!("INPUT ROOT = {:?}", input_root);
+    println!("CACHE ROOT = {:?}", cache_root);
 
     std::fs::create_dir_all(&input_root)?;
     std::fs::create_dir_all(&cache_root)?;
@@ -95,8 +104,12 @@ fn main() -> anyhow::Result<()> {
 
     match cli.cmd {
         Commands::ListDatasets => app::list_datasets(&cfg)?,
-        Commands::Plan { dataset, mode } => app::plan(&cfg, &dataset, parse_mode(&mode))?,
-        Commands::Extract { dataset, mode } => app::extract(&cfg, &dataset, parse_mode(&mode))?,
+        Commands::Plan { dataset, mode } => {
+            app::plan(&cfg, &dataset, parse_mode(&mode))?
+        }
+        Commands::Extract { dataset, mode } => {
+            app::extract(&cfg, &dataset, parse_mode(&mode))?
+        }
         Commands::RunAll => app::run_all(&cfg)?,
     }
 

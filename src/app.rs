@@ -306,6 +306,14 @@ fn extract_multi(
             size_mb(st.size),
             duckdb_threads_heavy
         );
+let key = st.path.to_string_lossy().to_string();
+if let Some(old_name) = map.get(&key) {
+    let old_path = daily_dir.join(old_name);
+    if old_path.exists() {
+        let _ = std::fs::remove_file(&old_path);
+        println!("Removed old parquet: {}", old_path.display());
+    }
+}
 
         match extract_one_excel_to_parquet(&st.path, &out_parquet, duckdb_threads_heavy) {
             Ok(_) => {
@@ -381,6 +389,17 @@ fn extract_multi(
         match r {
             Ok(ok) => {
                 println!("Wrote: {} (day={})", ok.out_display, ok.day);
+
+if let Some(old_name) = map.get(&ok.input_path) {
+    let old_path = daily_dir.join(old_name);
+    if old_path.exists() {
+        let _ = std::fs::remove_file(&old_path);
+        println!("Removed old parquet: {}", old_path.display());
+    }
+}
+
+
+
                 map.insert(ok.input_path, ok.parquet_name);
                 ok_count += 1;
             }
