@@ -19,13 +19,24 @@ options:
 transform:
 
   select:
-    - SAP_ID
+    - CAST(SAP_ID AS BIGINT) AS SAP_ID
     - Account_Status
     - Driver_Type
     - Plate_Number
     - Vehicle_Type
     - Vehicle_Model
-    - Wallet_balance
+    - CAST(
+        ROUND(
+          CAST(
+            REPLACE(
+              REPLACE(
+                REPLACE(Wallet_balance, 'đ', ''),
+              '.', ''),
+            ',', '.'
+          ) AS DOUBLE
+        ) * 100
+      AS BIGINT
+      ) AS Wallet_balance
 
   filters:
     - "\"Account_Status\" = 'ACTIVATED'"

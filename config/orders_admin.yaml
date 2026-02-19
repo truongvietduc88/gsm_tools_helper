@@ -25,9 +25,17 @@ transform:
     - Service_Name
     - Vehicle
     - Driver_Vehicle_Plate
-    - Sap_Profile_Id
+    - CASE 
+        WHEN Sap_Profile_Id IS NULL OR Sap_Profile_Id = '' 
+        THEN NULL 
+        ELSE CAST(Sap_Profile_Id AS BIGINT)
+      END AS Sap_Profile_Id
     - Payment_Method
-    - Total_Fee_Display
+    - CASE 
+        WHEN Total_Fee_Display IS NULL OR Total_Fee_Display = '' 
+        THEN NULL 
+        ELSE CAST(Total_Fee_Display AS BIGINT)
+      END AS Total_Fee_Display
     - Cancel_Reason
     - Detail_Reason
     - Cancel_By
