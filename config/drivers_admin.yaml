@@ -19,16 +19,16 @@ options:
 transform:
 
   select:
-    - SAP ID
-    - Account Status
-    - Driver Type
-    - Plate Number
-    - Vehicle Type
-    - Vehicle Model
-    - Wallet balance
+    - SAP_ID
+    - Account_Status
+    - Driver_Type
+    - Plate_Number
+    - Vehicle_Type
+    - Vehicle_Model
+    - Wallet_balance
 
   filters:
-    - "\"Account Status\" = 'ACTIVATED'"
-    - "\"Driver Type\" = 'car'"
+    - "\"Account_Status\" = 'ACTIVATED'"
+    - "\"Driver_Type\" = 'car'"
 
   distinct: true

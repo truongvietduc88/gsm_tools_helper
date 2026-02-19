@@ -177,7 +177,7 @@ fn extract_single(
         .duckdb_threads
         .unwrap_or_else(|| autotune::auto_tune_single(&cfg.hw));
 
-    extract_one_excel_to_parquet(&plan_files[0], &new_parquet, duckdb_threads)?;
+    extract_one_excel_to_parquet(dataset, &plan_files[0], &new_parquet, duckdb_threads)?;
     println!("Wrote: {}", new_parquet.display());
 
     if let Some(oldp) = old_parquet_path {
@@ -315,7 +315,7 @@ if let Some(old_name) = map.get(&key) {
     }
 }
 
-        match extract_one_excel_to_parquet(&st.path, &out_parquet, duckdb_threads_heavy) {
+        match extract_one_excel_to_parquet(dataset, &st.path, &out_parquet, duckdb_threads_heavy) {
             Ok(_) => {
                 println!("Wrote: {}", out_parquet.display());
                 map.insert(st.path.to_string_lossy().to_string(), parquet_name);
@@ -364,21 +364,22 @@ if let Some(old_name) = map.get(&key) {
                 let key = st.path.to_string_lossy().to_string();
 
                 let r: anyhow::Result<OkItem> = (|| {
-                    let day = yyyy_mm_dd_from_orders_admin_filename(&st.path)
-                        .unwrap_or_else(|| "unknown-date".to_string());
+    let day = yyyy_mm_dd_from_orders_admin_filename(&st.path)
+        .unwrap_or_else(|| "unknown-date".to_string());
 
-                    let parquet_name = build_parquet_name(&st.path, st.mtime_unix_ms);
-                    let out_parquet = daily_dir_cloned.join(&parquet_name);
+    let parquet_name = build_parquet_name(&st.path, st.mtime_unix_ms);
+    let out_parquet = daily_dir_cloned.join(&parquet_name);
 
-                    extract_one_excel_to_parquet(&st.path, &out_parquet, duckdb_threads_parallel)?;
+    extract_one_excel_to_parquet(dataset, &st.path, &out_parquet, duckdb_threads_parallel)?;
 
-                    Ok(OkItem {
-                        input_path: key.clone(),
-                        parquet_name,
-                        out_display: out_parquet.display().to_string(),
-                        day,
-                    })
-                })();
+    Ok(OkItem {
+        input_path: key.clone(),
+        parquet_name,
+        out_display: out_parquet.display().to_string(),
+        day,
+    })
+})();
+
 
                 (key, r)
             })

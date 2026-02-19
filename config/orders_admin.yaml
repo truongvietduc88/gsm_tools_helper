@@ -19,32 +19,36 @@ options:
 transform:
 
   select:
-    - Order ID
+    - Order_ID
     - Status
-    - Service Type
-    - Service Name
-    - Create Time
-    - Completed Time
+    - Service_Type
+    - Service_Name
     - Vehicle
-    - Driver Vehicle Plate
-    - Sap Profile Id
-    - Payment Method
-    - Total Fee Display
-    - Cancel Reason
-    - Detail Reason
-    - Cancel By
+    - Driver_Vehicle_Plate
+    - Sap_Profile_Id
+    - Payment_Method
+    - Total_Fee_Display
+    - Cancel_Reason
+    - Detail_Reason
+    - Cancel_By
 
   rename:
-    Sap Profile Id: SAP ID
+    Sap_Profile_Id: SAP_ID
 
   filters:
-    - "\"Sap Contract Type\" = 'car'"
+    - "\"Sap_Contract_Type\" = 'car'"
 
   computed:
-    - name: Create Time
-      expr: "CAST(\"Create Time\" AS TIMESTAMP)"
+  - name: Create_Time
+    expr: "CASE WHEN \"Create_Time\" IS NULL OR \"Create_Time\" = '' 
+            THEN NULL 
+            ELSE CAST(\"Create_Time\" AS TIMESTAMP) 
+           END"
 
-    - name: Completed Time
-      expr: "CAST(\"Completed Time\" AS TIMESTAMP)"
+  - name: Completed_Time
+    expr: "CASE WHEN \"Completed_Time\" IS NULL OR \"Completed_Time\" = '' 
+            THEN NULL 
+            ELSE CAST(\"Completed_Time\" AS TIMESTAMP) 
+           END"
 
   distinct: true

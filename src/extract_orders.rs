@@ -1,5 +1,6 @@
 // extract_orders.rs (PATCHED)
 
+use crate::config::load_yaml;
 use anyhow::{anyhow, Context, Result};
 use calamine::{open_workbook_auto, Data, Reader};
 use duckdb::Connection;
@@ -108,10 +109,18 @@ fn merge_type(cur: ColType, v: &Data) -> ColType {
             let as_int_like = float_is_integer(*f);
             match cur {
                 ColType::Unknown => {
-                    if as_int_like { ColType::Int } else { ColType::Double }
+                    if as_int_like {
+                        ColType::Int
+                    } else {
+                        ColType::Double
+                    }
                 }
                 ColType::Int => {
-                    if as_int_like { ColType::Int } else { ColType::Double }
+                    if as_int_like {
+                        ColType::Int
+                    } else {
+                        ColType::Double
+                    }
                 }
                 ColType::Double => ColType::Double,
                 ColType::Bool => ColType::Text,
@@ -218,10 +227,32 @@ fn fill_typed_slot(
 /// - Transaction + Appender
 /// - typed columns (infer) => giảm format/alloc mạnh cho số
 pub fn extract_one_excel_to_parquet(
+    dataset_name: &str, // ← thêm dòng này
+    
+
     excel_path: &Path,
     parquet_out: &Path,
     duckdb_threads: usize,
+    
 ) -> Result<()> {
+    println!("Dataset passed into extract = {}", dataset_name);
+    // Chuẩn hóa tên dataset (bỏ _single / _multi)
+let dataset_clean = dataset_name
+    .replace("_single", "")
+    .replace("_multi", "");
+
+    let yaml_path = Path::new("config").join(format!("{}.yaml", dataset_clean));
+let yaml_config = load_yaml(&yaml_path);
+
+if yaml_config.is_some() {
+    println!("YAML loaded: {:?}", yaml_path);
+}
+
+
+    if yaml_config.is_some() {
+        println!("YAML loaded: {:?}", yaml_path);
+    }
+
     // 1) Open Excel
     let mut wb = open_workbook_auto(excel_path)
         .with_context(|| format!("open workbook {}", excel_path.display()))?;
@@ -245,7 +276,11 @@ pub fn extract_one_excel_to_parquet(
     let mut cols: Vec<String> = Vec::with_capacity(header.len());
     for (i, c) in header.iter().enumerate() {
         cell_to_text_into(c, &mut tmp);
-        let name = if tmp.is_empty() { format!("col_{i}") } else { tmp.clone() };
+        let name = if tmp.is_empty() {
+            format!("col_{i}")
+        } else {
+            tmp.clone()
+        };
         cols.push(sanitize_col_name(&name));
     }
 
@@ -278,7 +313,7 @@ pub fn extract_one_excel_to_parquet(
 
     // 4) Create typed table
     let create_sql = format!(
-        "CREATE TABLE t ({})",
+        "CREATE TABLE raw ({})",
         cols.iter()
             .zip(types.iter())
             .map(|(c, t)| format!("\"{}\" {}", c, type_name(*t)))
@@ -291,7 +326,7 @@ pub fn extract_one_excel_to_parquet(
     conn.execute("BEGIN TRANSACTION", [])?;
 
     // 5) Appender
-    let mut app = conn.appender("t")?;
+    let mut app = conn.appender("raw")?;
 
     // per-col reusable storage (stable refs per row)
     let mut text_vals: Vec<String> = (0..ncols).map(|_| String::new()).collect();
@@ -334,9 +369,56 @@ pub fn extract_one_excel_to_parquet(
     conn.execute("COMMIT", [])?;
     println!("Total rows inserted: {}", count);
 
-    // 6) Export Parquet
+    // ===== APPLY YAML TRANSFORM =====
+    let mut final_query = "SELECT * FROM raw".to_string();
+
+    if let Some(cfg) = &yaml_config {
+        if let Some(transform) = &cfg.transform {
+            let mut select_parts: Vec<String> = Vec::new();
+
+            if let Some(cols) = &transform.select {
+                for col in cols {
+                    select_parts.push(format!("\"{}\"", col));
+                }
+            } else {
+                select_parts.push("*".to_string());
+            }
+
+            if let Some(computed) = &transform.computed {
+                for c in computed {
+                    select_parts.push(format!("{} AS \"{}\"", c.expr, c.name));
+                }
+            }
+
+            let mut query = format!("SELECT {}", select_parts.join(", "));
+            query.push_str(" FROM raw");
+
+            if let Some(filters) = &transform.filters {
+                if !filters.is_empty() {
+                    query.push_str(" WHERE ");
+                    query.push_str(&filters.join(" AND "));
+                }
+            }
+
+            if transform.distinct.unwrap_or(false) {
+                query = query.replacen("SELECT", "SELECT DISTINCT", 1);
+            }
+
+            final_query = query;
+        }
+    }
+
+    // Drop table t nếu tồn tại
+    conn.execute("DROP TABLE IF EXISTS t", [])?;
+
+    // Tạo bảng t từ raw + YAML
+    let create_final_sql = format!("CREATE TABLE t AS {}", final_query);
+    conn.execute(&create_final_sql, [])?;
+
+    // 🔥 Export parquet
     let out = parquet_out.to_string_lossy().replace('\\', "/");
     let copy_sql = format!("COPY t TO '{}' (FORMAT PARQUET, COMPRESSION SNAPPY)", out);
+
     conn.execute(&copy_sql, [])?;
 
     Ok(())

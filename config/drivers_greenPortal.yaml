@@ -19,35 +19,41 @@ options:
 transform:
 
   select:
-    - Mã SAP
-    - Số điện thoại
-    - Họ & tên
-    - Trạng thái
-    - Ngày sinh
-    - Giới tính
-    - Trạng thái tài khoản
-    - Lý do khóa
-    - Dòng xe
-    - Biển số
-    - Trạng thái gán
-    - Thời gian gán
+    - Mã_SAP
+    - Số_điện_thoại
+    - Họ___tên
+    - Trạng_thái
+    - Ngày_sinh
+    - Giới_tính
+    - Trạng_thái_tài_khoản
+    - Lý_do_khóa
+    - Dòng_xe
+    - Biển_số
+    - Trạng_thái_gán
     - Tổ
-    - Loại tài xế
-    - Trạng thái Deposit
-    - Ngày đầu tiên gán xe
+    - Loại_tài_xế
+    - Trạng_thái_Deposit
 
   rename:
-    Mã SAP: SAP ID
+    Mã_SAP: SAP_ID
 
   filters:
-    - "\"Loại tài xế\" = 'Internal'"
-    - "(\"Lý do khóa\" IS NULL OR \"Lý do khóa\" <> 'Terminate')"
+    - "\"Loại_tài_xế\" = 'Internal'"
+    - "(\"Lý_do_khóa\" IS NULL OR \"Lý_do_khóa\" <> 'Terminate')"
 
-  computed:
-    - name: Thời gian gán
-      expr: "CAST(\"Thời gian gán\" AS TIMESTAMP) + INTERVAL 7 HOUR"
+ computed:
+  - name: Thời_gian_gán
+    expr: "CASE WHEN \"Thời_gian_gán\" IS NULL OR \"Thời_gian_gán\" = '' 
+            THEN NULL 
+            ELSE CAST(\"Thời_gian_gán\" AS TIMESTAMP) + INTERVAL 7 HOUR 
+           END"
 
-    - name: Ngày đầu tiên gán xe
-      expr: "CAST(\"Ngày đầu tiên gán xe\" AS TIMESTAMP) + INTERVAL 7 HOUR"
+  - name: Ngày_đầu_tiên_gán_xe
+    expr: "CASE WHEN \"Ngày_đầu_tiên_gán_xe\" IS NULL OR \"Ngày_đầu_tiên_gán_xe\" = '' 
+            THEN NULL 
+            ELSE CAST(\"Ngày_đầu_tiên_gán_xe\" AS TIMESTAMP) + INTERVAL 7 HOUR 
+           END"
+
+ 
 
   distinct: true

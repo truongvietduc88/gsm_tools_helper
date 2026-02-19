@@ -5,6 +5,7 @@ mod fs_scan;
 mod types;
 mod hw;
 mod autotune;
+mod config;
 
 use clap::{Parser, Subcommand};
 use std::path::PathBuf;
