@@ -374,21 +374,33 @@ if yaml_config.is_some() {
 
     if let Some(cfg) = &yaml_config {
         if let Some(transform) = &cfg.transform {
-            let mut select_parts: Vec<String> = Vec::new();
+            
+            // ✨ Build SELECT với support rename
+let mut select_parts: Vec<String> = Vec::new();
 
-            if let Some(cols) = &transform.select {
-                for col in cols {
-                    select_parts.push(format!("\"{}\"", col));
-                }
-            } else {
-                select_parts.push("*".to_string());
+if let Some(cols) = &transform.select {
+    for col in cols {
+        // Nếu có rename trong YAML
+        if let Some(rename_map) = &transform.rename {
+            if let Some(alias) = rename_map.get(col) {
+                select_parts.push(format!("\"{}\" AS \"{}\"", col, alias));
+                continue;
             }
+        }
+        // Mặc định chọn tên gốc
+        select_parts.push(format!("\"{}\"", col));
+    }
+} else {
+    select_parts.push("*".to_string());
+}
 
-            if let Some(computed) = &transform.computed {
-                for c in computed {
-                    select_parts.push(format!("{} AS \"{}\"", c.expr, c.name));
-                }
-            }
+// Sau đó add computed columns (nếu có)
+if let Some(computed) = &transform.computed {
+    for c in computed {
+        select_parts.push(format!("{} AS \"{}\"", c.expr, c.name));
+    }
+}
+
 
             let mut query = format!("SELECT {}", select_parts.join(", "));
             query.push_str(" FROM raw");

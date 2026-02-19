@@ -36,24 +36,37 @@ transform:
 
   rename:
     Mã_SAP: SAP_ID
+    Số_điện_thoại: so_dien_thoai
+    Họ___tên: ho_ten
+    Trạng_thái: trang_thai
+    Ngày_sinh: ngay_sinh
+    Giới_tính: gioi_tinh
+    Trạng_thái_tài_khoản: trang_thai_tai_khoan
+    Lý_do_khóa: ly_do_khoa
+    Dòng_xe: dong_xe
+    Biển_số: bien_so
+    Trạng_thái_gán: trang_thai_gan
+    Tổ: to
+    Loại_tài_xế: loai_tai_xe
+    Trạng_thái_Deposit: trang_thai_deposit
+    Thời_gian_gán: thoi_gian_gan
+    Ngày_đầu_tiên_gán_xe: ngay_dau_tien_gan_xe
 
   filters:
     - "\"Loại_tài_xế\" = 'Internal'"
     - "(\"Lý_do_khóa\" IS NULL OR \"Lý_do_khóa\" <> 'Terminate')"
 
- computed:
-  - name: Thời_gian_gán
-    expr: "CASE WHEN \"Thời_gian_gán\" IS NULL OR \"Thời_gian_gán\" = '' 
+  computed:
+    - name: thoi_gian_gan
+      expr: "CASE WHEN \"Thời_gian_gán\" IS NULL OR \"Thời_gian_gán\" = '' 
             THEN NULL 
             ELSE CAST(\"Thời_gian_gán\" AS TIMESTAMP) + INTERVAL 7 HOUR 
            END"
 
-  - name: Ngày_đầu_tiên_gán_xe
-    expr: "CASE WHEN \"Ngày_đầu_tiên_gán_xe\" IS NULL OR \"Ngày_đầu_tiên_gán_xe\" = '' 
+    - name: ngay_dau_tien_gan_xe
+      expr: "CASE WHEN \"Ngày_đầu_tiên_gán_xe\" IS NULL OR \"Ngày_đầu_tiên_gán_xe\" = '' 
             THEN NULL 
             ELSE CAST(\"Ngày_đầu_tiên_gán_xe\" AS TIMESTAMP) + INTERVAL 7 HOUR 
            END"
-
- 
 
   distinct: true
