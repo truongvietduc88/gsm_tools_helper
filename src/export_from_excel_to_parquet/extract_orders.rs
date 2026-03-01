@@ -1,14 +1,34 @@
 use anyhow::{Result, anyhow};
 use duckdb::Connection;
 use num_cpus;
+use std::path::PathBuf;
 
-use crate::export_from_excel_to_parquet::types::Dataset;
+
+use crate::export_from_excel_to_parquet::config::Dataset;
 
 /// Giữ nguyên signature cũ
 pub fn process_dataset(dataset: &Dataset) -> Result<()> {
 
     // ===== DÙNG FILE LIST DO fs_scan CHUẨN BỊ =====
-    let excel_files = &dataset.input_files;
+    let folder = &dataset.input_folder;
+
+let excel_files: Vec<PathBuf> = std::fs::read_dir(folder)?
+    .filter_map(|entry| {
+        let path = entry.ok()?.path();
+
+        if path.extension()
+            .and_then(|e| e.to_str())
+            .map(|ext| ext.eq_ignore_ascii_case("xlsx"))
+            .unwrap_or(false)
+        {
+            Some(path)
+        } else {
+            None
+        }
+    })
+    .collect();
+
+let _sql_body = build_sql(dataset, &excel_files)?;
 
     if excel_files.is_empty() {
         return Err(anyhow!(
@@ -26,7 +46,7 @@ pub fn process_dataset(dataset: &Dataset) -> Result<()> {
     conn.execute(&format!("PRAGMA threads={}", threads), [])?;
     conn.execute("PRAGMA memory_limit='70%'", [])?;
 
-    let sql_body = build_sql(dataset, excel_files)?;
+    let sql_body = build_sql(dataset, &excel_files)?;
 
     let final_sql = format!(
         "COPY ({}) TO '{}' (FORMAT PARQUET, COMPRESSION ZSTD)",
